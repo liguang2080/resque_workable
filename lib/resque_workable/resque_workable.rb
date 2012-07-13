@@ -20,8 +20,9 @@ module ResqueWorkable
       Resque.enqueue(self, method.to_sym, *args)
     end
 
+    # 对resque_scheduler进行扩充 在rails production下才有效
     def self.delay_at(at_time, method, *args)
-      if Rails.env == "production"
+      if defined?(Rails) && Rails.env == "production"
         Resque.enqueue_at at_time, self, method, *args
       else
         Resque.enqueue self, method, *args
