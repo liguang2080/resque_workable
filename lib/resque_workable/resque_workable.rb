@@ -7,21 +7,24 @@
 # Resque.enqueue(TestTask, :google, "sina")
 
 module ResqueWorkable
-  extend ActiveSupport::Concern
 
-  included do
-    @queue = self.name.underscore
+  def self.included(base_class)
+    base_class.class_eval do
+      @queue = self.name.underscore
+    end
+    base_class.extend ClassMethods
+  end
 
-    def self.perform(method, *args)
+  module ClassMethods
+    def perform(method, *args)
       self.send(method, *args)
     end
 
-    def self.delay(method, *args)
+    def delay(method, *args)
       Resque.enqueue(self, method.to_sym, *args)
     end
 
-    # 对resque_scheduler进行扩充 在rails production下才有效
-    def self.delay_at(at_time, method, *args)
+    def delay_at(at_time, method, *args)
       if defined?(Rails) && Rails.env == "production"
         Resque.enqueue_at at_time, self, method, *args
       else
@@ -29,4 +32,5 @@ module ResqueWorkable
       end
     end
   end
+
 end
